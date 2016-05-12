@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">    
+    <link rel="stylesheet" type="text/css" href="css/style.css">    
+	<script src="http://libs.baidu.com/jquery/2.0.0/jquery.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<style type="text/css">
+		html,body{height: 100%;}
+		.panel-height{height: 100%;position: relative;}
+		.panel-height > .btn{text-align: center;}
+		.btn_box{margin-top: 1%;text-align: right;}
+		.subBtn{position: fixed;bottom: 0;background: #eee;width: 100%;padding-right: 10px;}
+	</style>
+</head>
+<body>
+<div class="panel panel-primary panel-height" id="infoBox">
+	<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">登录</button>
+	<!-- Modal -->
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>
+					<h4 class="modal-title" id="myModalLabel">选择姓名</h4>
+				</div>
+				<div class="modal-body">
+					<div class="input-group input-group-lg">
+						<span class="input-group-addon" id="sizing-addon1">你的名字</span>
+						<input type="text" class="form-control" placeholder="你的名字" aria-describedby="sizing-addon1" id="inputName">
+					</div>
+					<div class="btn_box">
+						<button type="button" class="btn btn-info" id="randowName">随机姓名</button>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="button" class="btn btn-primary" id="subUser">确认</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div data-role="page" style="display:none;" id="mainBox">
+	<div data-role="header" class="header linear-g">
+        <a href="javascript:void(0);" data-iconpos="notext" class="glyphicon glyphicon-th-large col-xs-2 text-right"> </a>
+        <a class="text-center col-xs-8">聊天室</a>
+        <a href="javascript:void(0);" data-iconpos="notext" class="glyphicon glyphicon-user col-xs-2 text-left"> </a>
+    </div>
+    <div data-role="content" class="container" role="main">
+        <ul class="content-reply-box mg10"></ul>
+    </div>
+    <div class="subBtn">
+    	<div class="navbar-form navbar-right">
+	    	<div class="form-group">
+	          <input type="text" class="form-control" placeholder="请输入内容" id="sendText">
+	        </div>
+	        <button type="submit" class="btn btn-default" id="send">发送</button>
+        </div>
+    </div>
+</div>
+	<script type="text/javascript">
+		$(function(){
+			// 是否成功建立连接
+			var token = true;
+			// 异常处理
+			try{ 
+				var ws = new WebSocket("ws://172.16.166.162:9999/"); 
+			}finally{
+				alert("服务器连接失败");
+				token = false;
+			} 
+			// 随机userid
+			var userid = parseInt(Math.random()*100);
+			// 随机姓名
+			function nameText(){
+	            eval( "var name=" +  '"\\u' + (Math.round(Math.random() * 20901) + 19968).toString(16)+'"');
+	            return "小" + name;
+	        }
+	        // 随机姓名点击
+	        $("#randowName").click(function(){
+				$("#inputName").val(nameText());
+			});
+			// 登录处理
+			$("#subUser").click(function(){
+				if(token){
+					if($("#inputName").val() != ""){
+						$("#infoBox").hide();
+						$("#mainBox").show();
+						$(".modal-backdrop").hide();
+						$("#inputName").attr("name",$("#inputName").val());
+						$(".modal-open").css("overflow","auto");
+					}
+				}else{
+					alert("服务器连接失败");
+				}
+			});
+			// 发送
+			ws.onopen = function() {    
+				$("#send").click(function(){
+					var obj = {
+						text:$("#sendText").val(),//输入的文字
+						userid:userid,//userid
+						name:$("#inputName").attr("name")//你的名字
+					}
+					var json = JSON.stringify(obj);//转成json
+					ws.send(json);//发送数据
+					$("#sendText").val("");//输入框清空
+				});
+			};    
+			// 接收
+			ws.onmessage = function (evt) {   
+				var data = JSON.parse(evt.data);
+				var string = "";
+				// newTime:当前时间，oldTime：发布时间
+		        function timeText(newTime,oldTime){
+		            var times = parseInt((parseInt(newTime)-parseInt(oldTime))/1000/60);
+		            var date = new Date(parseInt(oldTime));
+		            if(times < 1){
+		                return "刚刚";
+		            }else if(times >= 1 && times < 60){
+		                return times+"分钟前";
+		            }else if(times >= 60 && times < 1440){
+		                return Math.ceil(times/60)+"小时前";
+		            }else if(times >= 1440 && times < 2880){
+		                var minute;
+		                if(date.getMinutes()<10){
+		                    minute = '0'+date.getMinutes();
+		                }else{
+		                    minute = date.getMinutes();
+		                }
+		                return "昨天"+date.getHours()+":"+minute;
+		            }else if(times >= 2880 && times < 4320){
+		                var minute;
+		                if(date.getMinutes()<10){
+		                    minute = '0'+date.getMinutes();
+		                }else{
+		                    minute = date.getMinutes();
+		                }
+		                return "2天前 "+date.getHours()+":"+minute;
+		            }else if(times >= 4320 && times < 525600){
+		                var minute;
+		                if(date.getMinutes()<10){
+		                    minute = '0'+date.getMinutes();
+		                }else{
+		                    minute = date.getMinutes();
+		                }
+		                return date.getMonth()+"月"+date.getDate()+"日"+" "+date.getHours()+":"+minute;
+		            }else if(times >= 525600){
+		                var minute;
+		                if(date.getMinutes()<10){
+		                    minute = '0'+date.getMinutes();
+		                }else{
+		                    minute = date.getMinutes();
+		                }
+		                return date.getFullYear()+"年"+date.getMonth()+"月"+date.getDate()+"日"+" "+date.getHours()+":"+minute;
+		            }
+		        }
+				if(userid == data.userid){
+					string +='<li class="even">';
+				}else{
+					string +='<li class="odd">';
+				}
+	            string +='<a class="user" href="#"><img class="img-responsive avatar_" src="img/avatar-1.png" alt=""><span class="user-name">'+data.name+'</span></a>\
+	                <div class="reply-content-box">\
+	                	<span class="reply-time">'+timeText(new Date().getTime(),data.time)+'</span>\
+	                    <div class="reply-content pr"><span class="arrow"></span>'+data.text+'</div>\
+	                </div>\
+	            </li>';
+				$(".content-reply-box").append(string);
+				var height = $(".container").height() + $(".linear-g").height() + $(".subBtn").height() + 20 + $(".even").height();
+				if(height>$("body").height()){
+					$(".subBtn").css("position",function(){
+						setTimeout(function(){
+							var h = $(document).height()-$(window).height();
+	  						$("body").animate({
+	  							scrollTop:h
+	  						},500);
+						},0);
+						return "static";
+					});
+				}
+			};    
+			// 关闭
+			ws.onclose = function() {  
+				if(token) alert("服务器已经关闭");  
+			};    
+			// 错误
+			ws.onerror = function(err) {    
+				if(token) alert("服务器错误");   
+			};
+
+		});
+	</script>
+</body>
+</html>
