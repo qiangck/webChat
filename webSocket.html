@@ -67,13 +67,7 @@
 		$(function(){
 			// 是否成功建立连接
 			var token = true;
-			// 异常处理
-			try{ 
-				var ws = new WebSocket("ws://172.16.166.162:9999/"); //换成自己的ip
-			}finally{
-				alert("服务器连接失败");
-				token = false;
-			} 
+			var ws = new WebSocket("ws://172.16.166.162:9999/"); //换成自己的ip
 			// 随机userid
 			var userid = parseInt(Math.random()*100);
 			// 随机姓名
@@ -96,7 +90,7 @@
 						$(".modal-open").css("overflow","auto");
 					}
 				}else{
-					alert("服务器连接失败");
+					alert("服务器错误");
 				}
 			});
 			// 发送
@@ -191,9 +185,9 @@
 			};    
 			// 错误
 			ws.onerror = function(err) {    
-				if(token) alert("服务器错误");   
+				alert("服务器错误");
+				token = false;
 			};
-
 		});
 	</script>
 </body>
