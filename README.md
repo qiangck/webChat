@@ -9,4 +9,6 @@
 
 * 二、架设web服务，这样朋友可以登录进来，打开webSocket.html == > 登录(输入用户名)  
 
-* 三、开始聊天
+* 三、开始聊天  
+  
+![image](http://7nj1vj.com1.z0.glb.clouddn.com/11111111.gif)
